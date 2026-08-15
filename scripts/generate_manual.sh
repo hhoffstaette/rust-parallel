@@ -34,6 +34,7 @@ echo '
    1. [Demo of command line arguments](#demo-of-command-line-arguments)
    1. [Demo of function and command line arguments from stdin](#demo-of-function-and-command-line-arguments-from-stdin)
    1. [Demo of function and initial arguments on command line, additional arguments from stdin](#demo-of-function-and-initial-arguments-on-command-line-additional-arguments-from-stdin)
+1. [Shell Quote](#shell-quote)
 '
 
 echo '## Command line options'
@@ -501,6 +502,69 @@ echo '
 $ cat test | rust-parallel -s logargs hello'
 
 cat test | $RUST_PARALLEL -s logargs hello
+rm -f test
+
+echo '```'
+
+echo '## Shell Quote
+
+When using shell mode (`-s`), the `--shell-quote` option applies shell escaping to each argument before passing it to the shell.
+
+This is useful when arguments contain special shell characters like `$`, backticks, single quotes, or double quotes that should be treated as literal strings and not interpreted by the shell.
+
+Without `--shell-quote`, special characters can cause command injection or unexpected shell behavior. With `--shell-quote` enabled, arguments are properly escaped.
+
+Consider a bash function that uses special characters:
+'
+
+echo '```'
+
+echo '$ demonstrate_shell_quote() {
+  for arg in "$@"; do
+    echo "arg: $arg"
+  done
+}'
+
+demonstrate_shell_quote() {
+  for arg in "$@"; do
+    echo "arg: $arg"
+  done
+}
+
+echo '
+$ export -f demonstrate_shell_quote'
+export -f demonstrate_shell_quote
+
+echo '```
+
+With `--shell-quote`, special characters in arguments are properly escaped:
+'
+
+echo '```'
+echo '$ cat >./test <<'"'"'EOL'"'"'
+hello$world
+foo`cmd`
+bar'"'"'baz'"'"'
+EOL'
+cat >./test <<'EOL'
+hello$world
+foo`cmd`
+bar'baz'
+EOL
+
+echo '
+$ cat test | rust-parallel -s --shell-quote demonstrate_shell_quote'
+cat test | $RUST_PARALLEL -s --shell-quote demonstrate_shell_quote
+echo '```'
+
+echo 'Without `--shell-quote`, special characters are interpreted by the shell, causing errors:
+'
+echo '```'
+echo '$ cat test | rust-parallel -s demonstrate_shell_quote'
+set +e
+cat test | $RUST_PARALLEL -s demonstrate_shell_quote 2>&1 | head -20
+set -e
+
 rm -f test
 
 echo '```'
