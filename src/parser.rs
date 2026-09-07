@@ -65,13 +65,11 @@ impl CommandBuilder {
                 let mut result = Vec::with_capacity(shell_command_and_args.len() + 1);
                 result.extend(shell_command_and_args.iter().cloned());
 
-                if self.shell_quote {
-                    result.push(
-                        shlex::try_join(parsed.command_and_args.iter().map(|s| s.as_str())).ok()?,
-                    );
+                result.push(if self.shell_quote {
+                    shlex::try_join(parsed.command_and_args.iter().map(|s| s.as_str())).ok()?
                 } else {
-                    result.push(parsed.command_and_args.join(" "));
-                }
+                    parsed.command_and_args.join(" ")
+                });
                 result
             }
         };
